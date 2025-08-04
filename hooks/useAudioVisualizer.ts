@@ -91,22 +91,43 @@ export const useAudioVisualizer = (
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const resizeCanvas = () => {
-        canvas.width = canvas.clientWidth * window.devicePixelRatio;
-        canvas.height = canvas.clientHeight * window.devicePixelRatio;
+        let tempCanvas: HTMLCanvasElement | null = null;
+        
+        // Before resizing, if it's a spectrogram, save the current state
+        if (visualizationType === VisualizationType.SPECTROGRAM && canvas.width > 0 && canvas.height > 0) {
+            tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx?.drawImage(canvas, 0, 0);
+        }
+
+        const newWidth = canvas.clientWidth * window.devicePixelRatio;
+        const newHeight = canvas.clientHeight * window.devicePixelRatio;
+
+        // Only resize if dimensions have actually changed
+        if (canvas.width !== newWidth || canvas.height !== newHeight) {
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            // After resizing, if we saved a state, draw it back scaled
+            if (tempCanvas) {
+                ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+            }
+        }
     };
     
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    resizeCanvas(); // Initial call to set size
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      if (visualizerState.animationFrameId) {
-        cancelAnimationFrame(visualizerState.animationFrameId);
-      }
     };
-  }, []);
+  }, [visualizationType]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
