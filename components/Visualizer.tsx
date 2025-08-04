@@ -12,9 +12,10 @@ interface VisualizerProps {
   onReady: () => void;
   isLooping: boolean;
   audioContext: AudioContext | null;
+  onShake: (shake: {x: number, y: number}) => void;
 }
 
-export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, visualizationType, volume, onEnded, onReady, isLooping, audioContext }) => {
+export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, visualizationType, volume, onEnded, onReady, isLooping, audioContext, onShake }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { playbackRate } = useSettings();
@@ -25,9 +26,9 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
       visualizationType,
       isReady,
       audioContext,
+      onShake,
   });
   
-  // Effect for controlling audio playback (play/pause)
   useEffect(() => {
     const audioElement = audioRef.current;
     if (!audioElement) return;
@@ -49,7 +50,6 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
     }
   }, [isPlaying, isReady]);
 
-  // Effect for handling audio source changes
   useEffect(() => {
     const audioElement = audioRef.current;
     if (!audioElement) return;
@@ -64,7 +64,6 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
     }
   }, [audioUrl]);
 
-  // Effect for controlling volume
   useEffect(() => {
     const audioElement = audioRef.current;
     if (audioElement) {
@@ -72,7 +71,6 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
     }
   }, [volume]);
   
-  // Effect for controlling playback rate
   useEffect(() => {
     const audioElement = audioRef.current;
     if (audioElement) {
@@ -80,7 +78,6 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
     }
   }, [playbackRate]);
 
-  // Effect for controlling looping
   useEffect(() => {
     const audioElement = audioRef.current;
     if (audioElement) {

@@ -17,6 +17,8 @@ interface SettingsContextType {
   setIntensity: (intensity: number) => void;
   playbackRate: number;
   setPlaybackRate: (rate: number) => void;
+  bassShake: boolean;
+  setBassShake: (enabled: boolean) => void;
   currentPaletteColors: string[];
   frequencyGains: Record<FrequencyBand, number>;
   setFrequencyGains: React.Dispatch<React.SetStateAction<Record<FrequencyBand, number>>>;
@@ -34,6 +36,7 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
   const [aiPalette, setAiPalette] = useState<string[]>([]);
   const [intensity, setIntensity] = useState<number>(1.0);
   const [playbackRate, setPlaybackRate] = useState<number>(1.0);
+  const [bassShake, setBassShake] = useState<boolean>(false);
   const [frequencyGains, setFrequencyGains] = useState<Record<FrequencyBand, number>>({
     [FrequencyBand.BASS]: 1,
     [FrequencyBand.MIDS]: 1,
@@ -60,10 +63,11 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
     aiPalette, setAiPalette,
     intensity, setIntensity,
     playbackRate, setPlaybackRate,
+    bassShake, setBassShake,
     currentPaletteColors,
     frequencyGains, setFrequencyGains,
     crossoverFrequencies, setCrossoverFrequencies,
-  }), [language, volume, visualization, palette, aiPalette, intensity, playbackRate, currentPaletteColors, frequencyGains, crossoverFrequencies]);
+  }), [language, volume, visualization, palette, aiPalette, intensity, playbackRate, bassShake, currentPaletteColors, frequencyGains, crossoverFrequencies]);
 
   return (
     <SettingsContext.Provider value={value}>

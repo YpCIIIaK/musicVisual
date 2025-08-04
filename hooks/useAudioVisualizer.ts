@@ -7,7 +7,6 @@ interface AudioVisualizerState {
   fileSource: MediaElementAudioSourceNode | null;
   animationFrameId: number | null;
   particles: Particle[];
-  // Cache key to prevent re-creating nodes unnecessarily
   cachedAudioElement: HTMLAudioElement | null;
 }
 
@@ -26,6 +25,7 @@ interface VisualizerOptions {
     visualizationType: VisualizationType;
     isReady: boolean;
     audioContext: AudioContext | null;
+    onShake: (shake: {x: number, y: number}) => void;
 }
 
 const hexToRgb = (hex: string): [number, number, number] | null => {
@@ -40,8 +40,8 @@ export const useAudioVisualizer = (
   canvasRef: React.RefObject<HTMLCanvasElement>,
   options: VisualizerOptions,
 ) => {
-  const { isPlaying, visualizationType, isReady, audioContext } = options;
-  const { currentPaletteColors, intensity, frequencyGains, crossoverFrequencies } = useSettings();
+  const { isPlaying, visualizationType, isReady, audioContext, onShake } = options;
+  const { currentPaletteColors, intensity, frequencyGains, crossoverFrequencies, bassShake } = useSettings();
 
   const visualizerState = useRef<AudioVisualizerState>({
     analyser: null,
@@ -51,28 +51,23 @@ export const useAudioVisualizer = (
     cachedAudioElement: null,
   }).current;
   
-  // Effect for managing audio graph connections
   useEffect(() => {
     if (!audioContext || !audioRef.current) {
       return;
     }
     const audioEl = audioRef.current;
 
-    // --- Analyser Node ---
     if (!visualizerState.analyser) {
       visualizerState.analyser = audioContext.createAnalyser();
       visualizerState.analyser.fftSize = 2048;
     }
     const analyser = visualizerState.analyser;
 
-    // --- Source Node ---
     if (visualizerState.cachedAudioElement !== audioEl) {
       try {
         visualizerState.fileSource = audioContext.createMediaElementSource(audioEl);
         visualizerState.cachedAudioElement = audioEl;
       } catch (e) {
-        // This can happen on hot-reloads. If a source for this element already exists, we can't create another.
-        // The existing one should be picked up fine in the next step.
         if (!(e instanceof DOMException && e.name === 'InvalidStateError')) {
            console.error("Error creating file source:", e);
         }
@@ -80,13 +75,10 @@ export const useAudioVisualizer = (
     }
     const fileSource = visualizerState.fileSource;
 
-    // --- Connection Logic ---
-    // Disconnect everything before reconnecting to ensure a clean state
     fileSource?.disconnect();
     analyser.disconnect();
 
     if (fileSource && isReady) {
-      // Connect the graph: audio element -> analyser -> speakers
       fileSource.connect(analyser);
       analyser.connect(audioContext.destination);
     }
@@ -170,7 +162,7 @@ export const useAudioVisualizer = (
           gain = frequencyGains[FrequencyBand.BASS];
         } else if (freq > crossoverFrequencies.bassMid && freq <= crossoverFrequencies.midTreble) {
           gain = frequencyGains[FrequencyBand.MIDS];
-        } else { // freq > crossoverFrequencies.midTreble
+        } else {
           gain = frequencyGains[FrequencyBand.TREBLE];
         }
 
@@ -209,7 +201,7 @@ export const useAudioVisualizer = (
     const centerY = ctx.canvas.height / 2;
 
     for (let i = 0; i < bufferLength; i++) {
-        const amplitude = (dataArray[i] - 128) / 128.0; // from -1 to 1
+        const amplitude = (dataArray[i] - 128) / 128.0;
         const y = centerY + (amplitude * centerY * (0.5 + intensity));
 
         if (i === 0) {
@@ -334,7 +326,7 @@ export const useAudioVisualizer = (
         }
     });
 
-    ctx.globalAlpha = 1; // Restore globalAlpha
+    ctx.globalAlpha = 1;
     visualizerState.particles = livingParticles;
   };
 
@@ -345,7 +337,7 @@ export const useAudioVisualizer = (
     const baseRadius = Math.min(centerX, centerY) * 0.1;
     const maxPetalLength = Math.min(centerX, centerY) * 0.8;
     
-    const segments = 64; // Number of petals
+    const segments = 64;
     for (let i = 0; i < segments; i++) {
         const value = dataArray[Math.floor(i * (bufferLength/segments))];
         const petalLength = ((value / 255) ** 2) * maxPetalLength * (0.5 + intensity);
@@ -384,7 +376,7 @@ export const useAudioVisualizer = (
 
         for (let j = 0; j < bufferLength; j++) {
             const dataIdx = (j + Math.floor(bufferLength / numStrings * i)) % bufferLength;
-            const v = dataArray[dataIdx] / 128.0; // value from 0 to 2
+            const v = dataArray[dataIdx] / 128.0;
             const y = yOffset + (v - 1) * stringHeight * 0.4 * intensity;
 
             if (j === 0) {
@@ -405,7 +397,7 @@ export const useAudioVisualizer = (
     const steps = 16;
 
     for (let i = steps; i > 0; i--) {
-        const dataIndex = Math.floor(bufferLength / 2 / steps * i); // use mid-high frequencies
+        const dataIndex = Math.floor(bufferLength / 2 / steps * i);
         const value = dataArray[dataIndex];
         
         const scale = i / steps;
@@ -421,6 +413,92 @@ export const useAudioVisualizer = (
         ctx.globalAlpha = alpha;
         ctx.strokeRect(x, y, width, height);
         ctx.globalAlpha = 1;
+    }
+  };
+
+  const drawSpectrogram = (ctx: CanvasRenderingContext2D, dataArray: Uint8Array, bufferLength: number) => {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+
+    const imageData = ctx.getImageData(1, 0, width - 1, height);
+    ctx.putImageData(imageData, 0, 0);
+
+    const barHeight = height / bufferLength;
+    for (let i = 0; i < bufferLength; i++) {
+        const value = dataArray[i];
+        const y = height - ((i + 1) * barHeight);
+        
+        const hue = (value / 255) * 300;
+        const saturation = 90;
+        const lightness = 15 + (value / 255) * 50;
+        ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.9)`;
+        
+        ctx.fillRect(width - 1, y, 1, barHeight + 1);
+    }
+  };
+
+  const drawParticleFlow = (ctx: CanvasRenderingContext2D, dataArray: Uint8Array, bufferLength: number) => {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    const colors = currentPaletteColors;
+    const energy = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
+
+    const numToSpawn = Math.floor((energy / 255) * 5 * intensity);
+    for (let i = 0; i < numToSpawn; i++) {
+        const midIndex = Math.floor(bufferLength / 4);
+        const trebleIndex = Math.floor(bufferLength / 2);
+        const midValue = dataArray[midIndex];
+        const trebleValue = dataArray[trebleIndex];
+
+        visualizerState.particles.push({
+            x: 0,
+            y: Math.random() * ctx.canvas.height,
+            vx: 1 + (midValue / 255) * 4 * intensity,
+            vy: (Math.random() - 0.5) * 2 + ((trebleValue / 255) - 0.5) * 3,
+            radius: (Math.random() * 1.5 + 0.5) * intensity,
+            alpha: 0.7 + Math.random() * 0.3,
+            color: colors[Math.floor(Math.random() * colors.length)],
+        });
+    }
+
+    const livingParticles: Particle[] = [];
+    visualizerState.particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.008;
+
+        if (p.alpha > 0 && p.x < ctx.canvas.width) {
+            livingParticles.push(p);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.fill();
+        }
+    });
+
+    ctx.globalAlpha = 1;
+    visualizerState.particles = livingParticles.slice(0, 800);
+  };
+
+  const handleBassShake = (dataArray: Uint8Array) => {
+    if (!bassShake) {
+        onShake({ x: 0, y: 0 });
+        return;
+    }
+    const bassBins = 8;
+    let bass = 0;
+    for (let i = 0; i < bassBins; i++) bass += dataArray[i];
+    bass /= bassBins;
+
+    if (bass > 190) {
+        const shakeAmount = ((bass - 190) / 65) * 8 * intensity;
+        const x = (Math.random() - 0.5) * shakeAmount;
+        const y = (Math.random() - 0.5) * shakeAmount;
+        onShake({ x, y });
+    } else {
+        onShake({ x: 0, y: 0 });
     }
   };
 
@@ -449,6 +527,15 @@ export const useAudioVisualizer = (
     }
 
     const processedData = isTimeDomain ? dataArray : processFrequencyData(dataArray, analyser, audioContext);
+    
+    handleBassShake(processedData);
+
+    if (visualizationType !== VisualizationType.SPECTROGRAM && visualizationType !== VisualizationType.GALAXY && visualizationType !== VisualizationType.PARTICLE_FLOW) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+    if (visualizationType !== VisualizationType.GALAXY && visualizationType !== VisualizationType.PARTICLE_FLOW) {
+        visualizerState.particles = [];
+    }
 
     switch(visualizationType){
         case VisualizationType.WAVEFORM:
@@ -475,6 +562,12 @@ export const useAudioVisualizer = (
         case VisualizationType.TUNNEL:
             drawTunnel(ctx, processedData, bufferLength);
             break;
+        case VisualizationType.SPECTROGRAM:
+            drawSpectrogram(ctx, processedData, bufferLength);
+            break;
+        case VisualizationType.PARTICLE_FLOW:
+            drawParticleFlow(ctx, processedData, bufferLength);
+            break;
         case VisualizationType.BARS:
         default:
             drawBars(ctx, processedData, bufferLength);
@@ -498,6 +591,7 @@ export const useAudioVisualizer = (
         cancelAnimationFrame(visualizerState.animationFrameId);
         visualizerState.animationFrameId = null;
       }
+      onShake({ x: 0, y: 0 });
     }
     return () => {
       if (visualizerState.animationFrameId) {
@@ -505,5 +599,5 @@ export const useAudioVisualizer = (
         visualizerState.animationFrameId = null;
       }
     };
-  }, [isPlaying, visualizationType, currentPaletteColors, intensity, audioContext, frequencyGains, crossoverFrequencies]);
+  }, [isPlaying, visualizationType, currentPaletteColors, intensity, audioContext, frequencyGains, crossoverFrequencies, bassShake]);
 };

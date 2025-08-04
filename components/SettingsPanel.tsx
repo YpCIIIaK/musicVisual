@@ -62,6 +62,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     palette, setPalette,
     intensity, setIntensity,
     playbackRate, setPlaybackRate,
+    bassShake, setBassShake,
     aiPalette, setAiPalette,
     currentPaletteColors,
     frequencyGains, setFrequencyGains,
@@ -251,6 +252,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                             />
                             <span className="font-mono text-sm w-12 text-center bg-gray-700 py-1 rounded-md">{intensity.toFixed(1)}</span>
                         </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-lg font-semibold mb-2">{t('bass_shake')}</h3>
+                        <p className="text-sm text-gray-400 mb-3 -mt-2">{t('bass_shake_description')}</p>
+                        <label htmlFor="bass-shake-toggle" className="flex items-center cursor-pointer">
+                            <div className="relative">
+                                <input type="checkbox" id="bass-shake-toggle" className="sr-only" checked={bassShake} onChange={(e) => setBassShake(e.target.checked)} />
+                                <div className="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${bassShake ? 'transform translate-x-6 bg-blue-400' : ''}`}></div>
+                            </div>
+                        </label>
                     </div>
                 </>
             )}

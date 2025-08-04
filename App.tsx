@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [isAutoplayScheduled, setAutoplayScheduled] = useState(false);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [isLooping, setIsLooping] = useState(false);
+  const [shake, setShake] = useState({ x: 0, y: 0 });
 
   const { visualization, setVisualization, volume } = useSettings();
   const { t } = useTranslation();
@@ -88,8 +89,6 @@ const App: React.FC = () => {
   };
 
   const handleEnded = () => {
-    // The native `loop` attribute on the audio element handles looping.
-    // This function is now only for advancing to the next track when not looping.
     if (playlist.length > 1) {
         handleNextTrack();
     } else {
@@ -142,16 +141,22 @@ const App: React.FC = () => {
       <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       <main className="flex-grow flex items-center justify-center relative">
-        <Visualizer 
-            audioUrl={audioUrl} 
-            isPlaying={isPlaying} 
-            visualizationType={visualization}
-            volume={volume}
-            onEnded={handleEnded}
-            onReady={handleReady}
-            isLooping={isLooping}
-            audioContext={audioContext}
-        />
+        <div 
+            className="absolute inset-0 w-full h-full transition-transform duration-75"
+            style={{ transform: `translate(${shake.x}px, ${shake.y}px)` }}
+        >
+            <Visualizer 
+                audioUrl={audioUrl} 
+                isPlaying={isPlaying} 
+                visualizationType={visualization}
+                volume={volume}
+                onEnded={handleEnded}
+                onReady={handleReady}
+                isLooping={isLooping}
+                audioContext={audioContext}
+                onShake={setShake}
+            />
+        </div>
         {playlist.length === 0 && (
              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                 <div className="text-center p-8 bg-black/30 backdrop-blur-sm rounded-xl">

@@ -1,4 +1,3 @@
-
 export enum VisualizationType {
   BARS = 'BARS',
   WAVEFORM = 'WAVEFORM',
@@ -9,6 +8,8 @@ export enum VisualizationType {
   FLOWER = 'FLOWER',
   STRINGS = 'STRINGS',
   TUNNEL = 'TUNNEL',
+  SPECTROGRAM = 'SPECTROGRAM',
+  PARTICLE_FLOW = 'PARTICLE_FLOW',
 }
 
 export enum Language {
