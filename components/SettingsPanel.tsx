@@ -11,7 +11,14 @@ interface SettingsPanelProps {
   onClose: () => void;
 }
 
-const SettingsButton = ({ onClick, isActive, children, disabled }: {onClick:()=>void, isActive:boolean, children:React.ReactNode, disabled?: boolean}) => (
+interface SettingsButtonProps {
+    onClick: () => void;
+    isActive: boolean;
+    children: React.ReactNode;
+    disabled?: boolean;
+}
+
+const SettingsButton: React.FC<SettingsButtonProps> = ({ onClick, isActive, children, disabled }) => (
     <button
         onClick={onClick}
         disabled={disabled}
@@ -23,7 +30,7 @@ const SettingsButton = ({ onClick, isActive, children, disabled }: {onClick:()=>
     >
         {children}
     </button>
-)
+);
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
   const {

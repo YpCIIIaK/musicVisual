@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FrequencyBand, VisualizationType } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
