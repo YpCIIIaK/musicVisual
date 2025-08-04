@@ -10,10 +10,11 @@ interface VisualizerProps {
   volume: number;
   onEnded: () => void;
   onReady: () => void;
+  isLooping: boolean;
   audioContext: AudioContext | null;
 }
 
-export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, visualizationType, volume, onEnded, onReady, audioContext }) => {
+export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, visualizationType, volume, onEnded, onReady, isLooping, audioContext }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { playbackRate } = useSettings();
@@ -78,6 +79,14 @@ export const Visualizer: React.FC<VisualizerProps> = ({ audioUrl, isPlaying, vis
         audioElement.playbackRate = playbackRate;
     }
   }, [playbackRate]);
+
+  // Effect for controlling looping
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      audioElement.loop = isLooping;
+    }
+  }, [isLooping]);
   
   const handleCanPlay = () => {
     setIsReady(true);

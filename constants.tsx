@@ -76,6 +76,29 @@ export const SparklesIcon = ({ className }: { className?: string }): React.React
   </svg>
 );
 
+export const LoopIcon = ({ className }: { className?: string }): React.ReactNode => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 2.1l4 4-4 4"/>
+    <path d="M3 12.2v-2a4 4 0 0 1 4-4h12"/>
+    <path d="M7 21.9l-4-4 4-4"/>
+    <path d="M21 11.8v2a4 4 0 0 1-4 4H5"/>
+  </svg>
+);
+
+export const PaintBrushIcon = ({ className }: { className?: string }): React.ReactNode => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+        <path d="M15 5l4 4" />
+    </svg>
+);
+
+export const EqualizerIcon = ({ className }: { className?: string }): React.ReactNode => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="4" y1="21" x2="4" y2="14" />
+        <line x1="12" y1="21" x2="12" y2="8" />
+        <line x1="20" y1="21" x2="20"y2="3" />
+    </svg>
+);
 
 type PaletteCollection = {
     [key in ColorPalette]?: string[];

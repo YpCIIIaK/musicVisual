@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAutoplayScheduled, setAutoplayScheduled] = useState(false);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [isLooping, setIsLooping] = useState(false);
 
   const { visualization, setVisualization, volume } = useSettings();
   const { t } = useTranslation();
@@ -87,6 +88,8 @@ const App: React.FC = () => {
   };
 
   const handleEnded = () => {
+    // The native `loop` attribute on the audio element handles looping.
+    // This function is now only for advancing to the next track when not looping.
     if (playlist.length > 1) {
         handleNextTrack();
     } else {
@@ -104,6 +107,10 @@ const App: React.FC = () => {
             setIsFullscreen(false);
         }
     }
+  };
+
+  const toggleLoop = () => {
+    setIsLooping(prev => !prev);
   };
 
   useEffect(() => {
@@ -142,6 +149,7 @@ const App: React.FC = () => {
             volume={volume}
             onEnded={handleEnded}
             onReady={handleReady}
+            isLooping={isLooping}
             audioContext={audioContext}
         />
         {playlist.length === 0 && (
@@ -162,6 +170,8 @@ const App: React.FC = () => {
           onNext={handleNextTrack}
           onPrev={handlePrevTrack}
           isAudioLoaded={playlist.length > 0}
+          isLooping={isLooping}
+          onToggleLoop={toggleLoop}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onToggleFullscreen={toggleFullscreen}
           isFullscreen={isFullscreen}

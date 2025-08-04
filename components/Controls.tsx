@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { PlayIcon, PauseIcon, UploadIcon, VolumeUpIcon, VolumeMuteIcon, SettingsIcon, NextIcon, PreviousIcon, FullscreenEnterIcon, FullscreenExitIcon } from '../constants';
+import { PlayIcon, PauseIcon, UploadIcon, VolumeUpIcon, VolumeMuteIcon, SettingsIcon, NextIcon, PreviousIcon, FullscreenEnterIcon, FullscreenExitIcon, LoopIcon } from '../constants';
 import { useSettings } from '../contexts/SettingsContext';
 import { useTranslation } from '../lib/i18n';
 
@@ -10,6 +10,8 @@ interface ControlsProps {
   onNext: () => void;
   onPrev: () => void;
   isAudioLoaded: boolean;
+  isLooping: boolean;
+  onToggleLoop: () => void;
   onOpenSettings: () => void;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
@@ -33,6 +35,8 @@ export const Controls: React.FC<ControlsProps> = ({
   onNext,
   onPrev,
   isAudioLoaded,
+  isLooping,
+  onToggleLoop,
   onOpenSettings,
   onToggleFullscreen,
   isFullscreen
@@ -103,6 +107,9 @@ export const Controls: React.FC<ControlsProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-end">
+        <ControlButton onClick={onToggleLoop} title={t('loop_track')} disabled={!isAudioLoaded} isActive={isLooping}>
+            <LoopIcon className="w-6 h-6"/>
+        </ControlButton>
         <ControlButton onClick={onToggleFullscreen} title={isFullscreen ? t('fullscreen_exit') : t('fullscreen_enter')}>
             {isFullscreen ? <FullscreenExitIcon className="w-6 h-6"/> : <FullscreenEnterIcon className="w-6 h-6"/>}
         </ControlButton>
