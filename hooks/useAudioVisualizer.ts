@@ -51,6 +51,8 @@ export const useAudioVisualizer = (
     cachedAudioElement: null,
   }).current;
   
+  const lastHiddenTimestamp = useRef<number | null>(null);
+
   useEffect(() => {
     if (!audioContext || !audioRef.current) {
       return;
@@ -105,6 +107,39 @@ export const useAudioVisualizer = (
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      if (document.hidden) {
+        lastHiddenTimestamp.current = performance.now();
+      } else {
+        if (lastHiddenTimestamp.current && visualizationType === VisualizationType.SPECTROGRAM) {
+          const elapsedTime = performance.now() - lastHiddenTimestamp.current;
+          const framesMissed = Math.round(elapsedTime / (1000 / 60));
+          
+          const ctx = canvas.getContext('2d');
+          if (ctx && framesMissed > 0) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const pixelsToShift = Math.min(width, framesMissed);
+
+            const imageData = ctx.getImageData(pixelsToShift, 0, width - pixelsToShift, height);
+            ctx.clearRect(0, 0, width, height);
+            ctx.putImageData(imageData, 0, 0);
+          }
+        }
+        lastHiddenTimestamp.current = null;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [visualizationType, canvasRef]);
 
   const getGradientColor = (position: number, value: number) => {
     const colors = currentPaletteColors;
