@@ -15,6 +15,8 @@ export enum VisualizationType {
 export enum Language {
     RU = 'ru',
     EN = 'en',
+    DE = 'de',
+    ZH = 'zh',
 }
 
 export enum ColorPalette {

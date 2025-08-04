@@ -355,12 +355,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 <>
                     <div>
                         <h3 className="text-lg font-semibold mb-2">{t('language')}</h3>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <SettingsButton onClick={() => setLanguage(Language.RU)} isActive={language === Language.RU}>
-                                <span className="flex items-center justify-center gap-2"><GlobeIcon className="w-5 h-5"/>{t('russian')}</span>
+                                <span className="flex items-center justify-center gap-2">{t('russian')}</span>
                             </SettingsButton>
                             <SettingsButton onClick={() => setLanguage(Language.EN)} isActive={language === Language.EN}>
-                                <span className="flex items-center justify-center gap-2"><GlobeIcon className="w-5 h-5"/>{t('english')}</span>
+                                <span className="flex items-center justify-center gap-2">{t('english')}</span>
+                            </SettingsButton>
+                            <SettingsButton onClick={() => setLanguage(Language.DE)} isActive={language === Language.DE}>
+                                <span className="flex items-center justify-center gap-2">{t('german')}</span>
+                            </SettingsButton>
+                            <SettingsButton onClick={() => setLanguage(Language.ZH)} isActive={language === Language.ZH}>
+                                <span className="flex items-center justify-center gap-2">{t('chinese')}</span>
                             </SettingsButton>
                         </div>
                     </div>
@@ -375,6 +381,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         }
         .animate-fade-in-up {
             animation: fade-in-up 0.3s ease-out forwards;
+        }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .max-h-\\[90vh\\]::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .max-h-\\[90vh\\] {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
     `}</style>
     </div>
