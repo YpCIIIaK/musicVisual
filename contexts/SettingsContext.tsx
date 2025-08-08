@@ -29,7 +29,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>(Language.RU);
+  const [language, setLanguage] = useState<Language>(Language.EN);
   const [volume, setVolume] = useState<number>(0.75);
   const [visualization, setVisualization] = useState<VisualizationType>(VisualizationType.BARS);
   const [palette, setPalette] = useState<ColorPalette>(ColorPalette.VIBRANT);
