@@ -16,6 +16,9 @@ const App: React.FC = () => {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [isLooping, setIsLooping] = useState(false);
   const [shake, setShake] = useState({ x: 0, y: 0 });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   const { visualization, setVisualization, volume } = useSettings();
   const { t } = useTranslation();
@@ -76,21 +79,11 @@ const App: React.FC = () => {
     }
   };
   
-  const handleNextTrack = useCallback(() => {
-    setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
-    setIsPlaying(false);
-    setAutoplayScheduled(true);
-  }, [playlist.length]);
-
-  const handlePrevTrack = () => {
-    setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + playlist.length) % playlist.length);
-    setIsPlaying(false);
-    setAutoplayScheduled(true);
-  };
-
   const handleEnded = () => {
     if (playlist.length > 1) {
-        handleNextTrack();
+        setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
+        setIsPlaying(false);
+        setAutoplayScheduled(true);
     } else {
         setIsPlaying(false);
     }
@@ -125,6 +118,28 @@ const App: React.FC = () => {
     }
   }, [isAutoplayScheduled]);
 
+  useEffect(() => {
+    const audio = audioElementRef.current;
+    if (!audio) return;
+    const update = () => {
+      setCurrentTime(audio.currentTime);
+      setDuration(audio.duration || 0);
+    };
+    audio.addEventListener('timeupdate', update);
+    audio.addEventListener('loadedmetadata', update);
+    return () => {
+      audio.removeEventListener('timeupdate', update);
+      audio.removeEventListener('loadedmetadata', update);
+    };
+  }, [audioElementRef]);
+  const handleSeek = (time: number) => {
+    const audio = audioElementRef.current;
+    if (audio) {
+      audio.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
   const currentTrackName = playlist.length > 0 ? playlist[currentTrackIndex].name : t('no_track');
 
   return (
@@ -146,6 +161,7 @@ const App: React.FC = () => {
             style={{ transform: `translate(${shake.x}px, ${shake.y}px)` }}
         >
             <Visualizer 
+                ref={audioElementRef}
                 audioUrl={audioUrl} 
                 isPlaying={isPlaying} 
                 visualizationType={visualization}
@@ -172,14 +188,15 @@ const App: React.FC = () => {
           isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onFileChange={handleFileChange}
-          onNext={handleNextTrack}
-          onPrev={handlePrevTrack}
           isAudioLoaded={playlist.length > 0}
           isLooping={isLooping}
           onToggleLoop={toggleLoop}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onToggleFullscreen={toggleFullscreen}
           isFullscreen={isFullscreen}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={handleSeek}
         />
       </footer>
     </div>

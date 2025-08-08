@@ -7,14 +7,15 @@ interface ControlsProps {
   isPlaying: boolean;
   onPlayPause: () => void;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onNext: () => void;
-  onPrev: () => void;
   isAudioLoaded: boolean;
   isLooping: boolean;
   onToggleLoop: () => void;
   onOpenSettings: () => void;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
+  currentTime: number;
+  duration: number;
+  onSeek: (time: number) => void;
 }
 
 const ControlButton: React.FC<{onClick?: () => void; title: string; children: React.ReactNode; disabled?: boolean; isActive?: boolean;}> = ({ onClick, title, children, disabled, isActive }) => (
@@ -32,14 +33,15 @@ export const Controls: React.FC<ControlsProps> = ({
   isPlaying,
   onPlayPause,
   onFileChange,
-  onNext,
-  onPrev,
   isAudioLoaded,
   isLooping,
   onToggleLoop,
   onOpenSettings,
   onToggleFullscreen,
-  isFullscreen
+  isFullscreen,
+  currentTime,
+  duration,
+  onSeek
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { volume, setVolume } = useSettings();
@@ -85,11 +87,17 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* Center Controls */}
-      <div className="flex items-center gap-2 sm:gap-4">
-        <ControlButton onClick={onPrev} title={t('prev_track')} disabled={!isAudioLoaded}>
-          <PreviousIcon className="w-6 h-6"/>
-        </ControlButton>
-
+      <div className="flex flex-col items-center gap-2 sm:gap-4 w-64">
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          step={0.01}
+          value={currentTime}
+          onChange={e => onSeek(Number(e.target.value))}
+          disabled={!isAudioLoaded}
+          className="w-full accent-blue-500"
+        />
         <button
           onClick={onPlayPause}
           disabled={!isAudioLoaded}
@@ -98,10 +106,6 @@ export const Controls: React.FC<ControlsProps> = ({
         >
           {isPlaying ? <PauseIcon className="w-8 h-8" /> : <PlayIcon className="w-8 h-8" />}
         </button>
-
-        <ControlButton onClick={onNext} title={t('next_track')} disabled={!isAudioLoaded}>
-          <NextIcon className="w-6 h-6"/>
-        </ControlButton>
       </div>
 
 
