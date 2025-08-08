@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useState, useEffect } from 'react';
 import { VisualizationType } from '../types';
 import { useAudioVisualizer } from '../hooks/useAudioVisualizer';
 import { useSettings } from '../contexts/SettingsContext';
