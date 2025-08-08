@@ -656,4 +656,70 @@ export const useAudioVisualizer = (
       }
     };
   }, [isPlaying, visualizationType, currentPaletteColors, intensity, audioContext, frequencyGains, crossoverFrequencies, bassShake]);
+
+  // --- PATCH: Spectrogram background rendering when tab is hidden ---
+  const intervalIdRef = useRef<number | null>(null);
+  const isTabHiddenRef = useRef(false);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isTabHiddenRef.current = document.hidden;
+      if (document.hidden) {
+        // Стартуем setInterval для спектрограммы только если играет музыка
+        if (
+          visualizationType === VisualizationType.SPECTROGRAM &&
+          intervalIdRef.current === null &&
+          isPlaying
+        ) {
+          intervalIdRef.current = window.setInterval(() => {
+            if (canvasRef.current && visualizerState.analyser && isPlaying) {
+              const ctx = canvasRef.current.getContext('2d');
+              if (!ctx) return;
+              const bufferLength = visualizerState.analyser.frequencyBinCount;
+              const dataArray = new Uint8Array(bufferLength);
+              visualizerState.analyser.getByteFrequencyData(dataArray);
+              drawSpectrogram(ctx, dataArray, bufferLength);
+              lastSpectroData.current = dataArray.slice();
+            }
+          }, 1000 / 60); // 60 FPS
+        }
+      } else {
+        // Останавливаем setInterval
+        if (intervalIdRef.current !== null) {
+          clearInterval(intervalIdRef.current);
+          intervalIdRef.current = null;
+        }
+        // --- PATCH: Заполняем пропущенные столбцы только если играла музыка ---
+        if (
+          visualizationType === VisualizationType.SPECTROGRAM &&
+          canvasRef.current && visualizerState.analyser &&
+          isPlaying &&
+          lastHiddenTimestamp.current
+        ) {
+          const ctx = canvasRef.current.getContext('2d');
+          if (!ctx) return;
+          const bufferLength = visualizerState.analyser.frequencyBinCount;
+          const framesMissed = Math.round((performance.now() - lastHiddenTimestamp.current) / (1000 / 60));
+          const dataArray = lastSpectroData.current || new Uint8Array(bufferLength);
+          for (let i = 0; i < framesMissed; i++) {
+            drawSpectrogram(ctx, dataArray, bufferLength);
+          }
+        }
+        // --- END PATCH ---
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    handleVisibilityChange();
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (intervalIdRef.current !== null) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
+    };
+  }, [visualizationType, canvasRef, visualizerState, isPlaying]);
+
+  // Для хранения последних данных спектра
+  const lastSpectroData = useRef<Uint8Array | null>(null);
+  // --- END PATCH ---
 };
